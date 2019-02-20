@@ -1,0 +1,1 @@
+ - The weights and bin edges vectors were supressed for the output of the weightcalculation script as this is now all done through the h3 histogram.
