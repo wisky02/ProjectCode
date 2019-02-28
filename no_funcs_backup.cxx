@@ -24,14 +24,6 @@
 #include "TStyle.h"
 #include "RooPlot.h"
 
-// saving plots as pdf for checking on laptop
-template <typename T>
-void save_this_plot(const char* filename, T plot_to_save ){
-TCanvas canv;
-plot_to_save.Draw();
-canv.SaveAs(filename);
-}
-
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& v)
 {
@@ -98,25 +90,27 @@ RooPlot* RooPlot_make(RooRealVar* RRV, RooDataSet* data,RooAddPdf pdf){
   pdf.plotOn(Frame);
   return(Frame);
 }
-/*
-std::vector<string> get_bin_edges(unsigned nbins, std::vector<T>& data)
+
+
+template <typename T>
+std::vector<T> get_bin_edges(unsigned nbins, std::vector<T>& data)
 {
-  std::vector<string> retVal; 
- // retVal.reserve(nbins + 1);
+  std::vector<T> retVal; 
+  retVal.reserve(nbins + 1);
   const auto itBeg = data.begin();
   const auto itEnd = data.end();
   for (unsigned i = 0; i < nbins; ++i) {
     const auto it = itBeg + std::size_t(float(i) / float(nbins) * (itEnd
           - itBeg));
     std::nth_element(itBeg, it, itEnd);
-    retVal.push_back(*it.to_str());
+    retVal.push_back(*it);
   }
   std::nth_element(itBeg, itEnd - 1, itEnd);
   retVal.push_back(std::nextafter(*(itEnd-1), std::numeric_limits<T>::infinity()));
   assert(retVal.size() == nbins + 1);
   return retVal;
 }
-*/
+
 template <typename T>
 std::vector<T> bin_data(const std::vector<T>& bin_edges, const std::vector<T>& data)
 {
@@ -172,11 +166,26 @@ void magup16_reweighted_fit(){
   RooRealVar* deltam = get_RRV(data_mass,"deltam");  
   cout << "RRV suc" <<endl;
   cout << "Finished loading data" << endl;
- 
- 
+  
   // Loading MC data for seeding fits
   auto monte_vars = get_rootfile<RooArgSet*>("/home/ppe/l/ldickson/MSci/improving_fits_code/datasets/monte_vars_RAS.root","monte_var_values");
+  //RooArgSet* monte_vars = (RooArgSet*)&(*monte_TObject);
+//  RooRealVar* monte_cdel_1 = (RooRealVar*)&(*monte_vars)["monte_cdel_1"];
  
+// Getting real data Delta Mass and D0 Mass
+ /*
+  TFile *_file0 = TFile::Open("/home/ppe/l/ldickson/MSci/2016_datasets/D0_M_1825_1905_magup_Kpipi_2016.root ");
+  RooDataSet* data_mass = (RooDataSet*)_file0->Get("data");
+  const RooArgSet* temp_vars = (RooArgSet*)data_mass->get(0);
+  RooRealVar* deltam = (RooRealVar*)&(*temp_vars)["deltam"];
+*/
+// Loading MC data for seeding fits
+ /*
+  TFile *_file_monte_var = TFile::Open("/home/ppe/l/ldickson/MSci/improving_fits_code/datasets/monte_vars_RAS.root");
+  TObject * monte_TObject = _file_monte_var->Get("monte_var_values");
+  RooArgSet* monte_vars = (RooArgSet*)&(*monte_TObject);
+  RooRealVar* monte_cdel_1 = (RooRealVar*)&(*monte_vars)["monte_cdel_1"];
+ */
   // Defining MC variables for seeding fits 
   auto monte_cdel_1_float = get_val(monte_vars,"monte_cdel_1");
   auto monte_cdel_2_float  = get_val(monte_vars,"monte_cdel_2"); 
@@ -188,7 +197,6 @@ void magup16_reweighted_fit(){
   auto monte_sigma_del_float  = get_val(monte_vars,"monte_sigma_del");
   auto monte_sigma_del2_float  = get_val(monte_vars,"monte_sigma_del2");
   cout << "Finished loading MC data" <<endl;
-  
   ////SIGNAL: SHAPE PARAMETER\\\\
 
   // Creating guassians and bifurcated guassian signal pdfs for deltam 
@@ -243,11 +251,11 @@ void magup16_reweighted_fit(){
   RooRealVar nsignal("nsignal", "", num_data_mass*0.3, 0, num_data_mass*1.5);
   RooRealVar n_com_bkg("n_com_bkg","", num_data_mass*0.35,0,num_data_mass*1.5);
   RooRealVar n_ranpi_bkg("n_ranpi_bkg","",num_data_mass*0.35, 0,num_data_mass*1.5);
-/*
+
   // Sum of signal, random pi and combinatorial background components
   RooAddPdf totalpdf("totalpdf", "", RooArgList(sig_pdf, com_bkgpdf, ranpi_bkgpdf), RooArgList(nsignal, n_com_bkg,n_ranpi_bkg));
   cout << "Finished creating total shape parameters" << endl;
-*/
+
   ////FITTING AND PLOTTING: SHAPE PARAMETER\\\\
 
   //Fitting and printing plots
@@ -255,9 +263,11 @@ void magup16_reweighted_fit(){
   totalpdf.fitTo(*data_mass);
   auto c2 = new TCanvas();
   auto del_frame = RooPlot_make(deltam,data_mass,totalpdf);
-  RooPlot* del_frame = deltam->frame();
-  data_mass->plotOn(del_frame);
-  totalpdf.plotOn(del_frame);
+*/
+//  RooPlot* del_frame = deltam->frame();
+//  data_mass->plotOn(del_frame);
+//  totalpdf.plotOn(del_frame);
+  /*
   cout << "Finished Fitting with MC seed" <<endl;
   totalpdf.Print("t"); //Print out each component of totalpdf
   totalpdf.plotOn(del_frame, Components("sig_pdf"), LineColor(kBlue), LineStyle(kDashed)) ;
@@ -267,30 +277,49 @@ void magup16_reweighted_fit(){
   totalpdf.plotOn(del_frame, Components("com_bkgpdf"), LineColor(kMagenta), LineStyle(kDashed)) ;
   totalpdf.plotOn(del_frame, Components("ranpi_bkgpdf"), LineColor(kRed), LineStyle(kDashed)) ;
   del_frame->Draw();
+*/
+/*
   const char* file_name = "deltam_fits_magup_2016.root";
   const char* save_choice = "RECREATE"; 
   void save_file(file_name,del_frame);
-  auto save_this_plot(const char* "test_plot_save.pdf",del_frame);
- */ 
- //GETTING COMBINED DATA  + CREATING VARIABLE BINS\\\\
+*/
 
-//Gettign totalpdf from saved fit
-TFile *file_pdf = TFile::Open("/home/ppe/l/ldickson/MSci/detector_assymmetry_code/code_2_0_1_6/ProjectCode/totalpdf_fit.root");
-RooAddPdf* totalpdf = (RooAddPdf*)file_pdf->Get("totalpdf");
+  ////GETTING COMBINED DATA  + CREATING VARIABLE BINS\\\\
 
   // Getting combined data for D0
+  
   auto data_D0_comb = get_rootfile<RooDataSet*>("/home/ppe/l/ldickson/MSci/2016_datasets/D0_M_1825_1905_magup_Kpipi_2016.root","data");
+  //auto data_D0_comb = *data_D0_comb_load.get();  
   auto ctau_D0 = get_RRV(data_D0_comb,"ctau");
   auto deltam_D0 = get_RRV(data_D0_comb,"deltam");
   float ctau_float;
 
+  // Defining dataset and variables D0_M, deltam and ctau for D0
+  /*
+  TFile *_file1 = TFile::Open("/home/ppe/l/ldickson/MSci/2016_datasets/D0_M_1825_1905_magup_Kpipi_2016.root ");
+  RooDataSet* data_D0_comb = (RooDataSet*) _file1->Get("data");
+  const RooArgSet* variables_D0 = data_D0_comb->get(0);
+  RooRealVar* ctau_D0 = (RooRealVar*)&(*variables_D0)["ctau"];
+  RooRealVar* deltam_D0 = (RooRealVar*)&(*variables_D0)["deltam"];
+  cout << "D0 done"  <<endl;
+   */
   // Getting combined data for D0_bar
+
   auto data_D0BAR_comb = get_rootfile<RooDataSet*>("/home/ppe/l/ldickson/MSci/detector_assymmetry_code/code_2_0_1_6/ProjectCode/D0Bar_weightapplied_magup16.root", "data");
  // auto data_D0BAR_comb = *weighted_data_D0BAR_comb_load.get();
   auto ctau_D0BAR = get_RRV(data_D0BAR_comb,"ctau");
   auto deltam_D0BAR = get_RRV(data_D0BAR_comb,"deltam");
   float ctaubar_double;
 
+  // Defining dataset and variables D0_M, deltam and ctau for D0_bar - WEIGHTED 
+  /*
+  TFile *_file2 = TFile::Open("/home/ppe/l/ldickson/MSci/detector_assymmetry_code/code_2_0_1_6/ProjectCode/D0Bar_weightapplied_magup16.root");
+  RooDataSet* data_D0BAR_comb = (RooDataSet*) _file2->Get("data");
+  const RooArgSet* variables_D0BAR = data_D0BAR_comb->get(0);
+  RooRealVar* ctau_D0BAR = (RooRealVar*)&(*variables_D0BAR)["ctau"];
+  RooRealVar* deltam_D0BAR = (RooRealVar*)&(*variables_D0BAR)["deltam"];
+  cout << "loaded D0 and D0bar(weighted) data" << endl; 
+  */
   // Combining D0 and D0bar and sorting bins
   unsigned int entries_D0 =  data_D0_comb->numEntries() ;
   unsigned  int entries_D0bar =  data_D0BAR_comb->numEntries();
@@ -313,15 +342,15 @@ RooAddPdf* totalpdf = (RooAddPdf*)file_pdf->Get("totalpdf");
   decaytimes.reserve( decaytimes_D0.size() + decaytimes_D0bar.size() ); // preallocate memory
   decaytimes.insert( decaytimes.end(), decaytimes_D0.begin(), decaytimes_D0.end() );
   decaytimes.insert( decaytimes.end(), decaytimes_D0bar.begin(), decaytimes_D0bar.end() );
-  cout << "combined datasets with size: " << decaytimes.size();
+//  sort(decaytimes.begin(), decaytimes.end()) ;
+cout << "combined datasets with size: " << decaytimes.size();
 
   ////CREATING VARIABLE BIN EDGES\\\\
-  
-//  unsigned  total_entries = decaytimes.size(); 
-//  const unsigned number_bins = 10;
-//  unsigned number_per_bin = total_entries/number_bins;
- 
-  /*
+
+/*  
+  unsigned  int total_entries = decaytimes.size(); 
+  const unsigned  int number_bins = 10;
+  unsigned  int number_per_bin = total_entries/number_bins;
   const vector<float> bin_edges_float = get_bin_edges(number_bins,decaytimes);
   cout << "bin edges float:" << bin_edges_float << endl;
   vector<string> bin_edges;
@@ -330,10 +359,11 @@ RooAddPdf* totalpdf = (RooAddPdf*)file_pdf->Get("totalpdf");
     temp = to_string(bin_edges_float[i]);
     bin_edges.push_back(temp);
   }
-cout << "bin edges string:" << bin_edges << endl;
 */
+
  // cout << "bin edges string:" << bin_edges << endl;
-  unsigned  int total_entries = decaytimes.size(); 
+
+unsigned  int total_entries = decaytimes.size(); 
   const unsigned  int number_bins = 10;
   unsigned  int number_per_bin = total_entries/number_bins;
 
@@ -353,18 +383,17 @@ cout << "bin edges string:" << bin_edges << endl;
     else{ continue; }
   }
 
+
   ////COMBINING/SORTING VECTORS AND CREATING VARIABLE BINS\\\\
 
-/*
   //Finding the signal strength between bins for BDTvalues_D0
-  auto histdata_D0 = bin_data<float>(bin_edges_float, decaytimes_D0);
-  cout << "histdata_D0=" << histdata_D0 << endl;
+//  auto histdata_D0 = bin_data(bin_edges, BDTvalues_D0);
+//  cout << "histdata_D0=" << histdata_D0 << endl;
   // Finding the signal strength between bins for BDTvalues_D0bar
-  auto histdata_D0bar = bin_data<float>(bin_edges_float, decaytimes_D0bar);
-  cout << "histdata_D0bar=" << histdata_D0bar << endl;
-*/
+//  auto histdata_D0bar = bin_data(bin_edges, BDTvalues_D0bar);
+//  cout << "histdata_D0bar=" << histdata_D0bar << endl;
 
-// Reducing datasets
+  //Creating strings for D0 reduced dataset cuts
   vector<string> bin_string_vect;
   string bin_str1;
   string bin_str2;
@@ -372,20 +401,22 @@ cout << "bin edges string:" << bin_edges << endl;
   string bin_str4;
   string bin_str5;
   string total_bin_str;
+  //D0
 
-  //D0 
-   for(unsigned int m = 0; m<bin_edges.size() -1; m++){
+  for(unsigned int m = 0; m<bin_edges.size() -1; m++){
     bin_str1 =  "ctau>= ";
-    bin_str2 =  bin_edges[m] ;
-    cout << "here" << endl;  
+    bin_str2 =  bin_edges[m] ; 
     bin_str3 = " && " ;
     bin_str4 = "ctau <" ;
     bin_str5 =bin_edges[m+1] ;
     total_bin_str = bin_str1 + bin_str2 + bin_str3 + bin_str4 + bin_str5;
     bin_string_vect.push_back(total_bin_str) ;
-   }
-cout << "here"  <<endl; 
-   //D0bar
+  }
+cout << "here" << endl;
+
+cout <<"bin string vect"<< bin_string_vect << endl;
+  //D0bar
+/*
   vector<string>bin_string_vect_bar;
   for(unsigned int m = 0; m<bin_edges.size() -1; m++){
     bin_str1 =  "ctau>= ";
@@ -396,11 +427,12 @@ cout << "here"  <<endl;
     total_bin_str = bin_str1 + bin_str2 + bin_str3 + bin_str4 + bin_str5;
     bin_string_vect_bar.push_back(total_bin_str) ;
   }
-
+*/
   //D0 reduce data sets
+
   vector<RooDataSet*> dataset_d0_vect;
   const char* bin_char;  
-
+ 
   for(unsigned int kl = 0; kl<number_bins ; kl++){
     bin_char = bin_string_vect[kl].c_str();
     RooDataSet* d1 = (RooDataSet*) data_D0_comb->reduce(RooArgSet(*deltam_D0, *ctau_D0),bin_char);
@@ -408,16 +440,17 @@ cout << "here"  <<endl;
   }
 
   //D0bar reduced datasets
+
   vector<RooDataSet*> dataset_d0bar_vect;
   for(unsigned int ky = 0; ky<number_bins  ; ky++){
-    bin_char = bin_string_vect_bar[ky].c_str();
+    bin_char = bin_string_vect[ky].c_str();
     RooDataSet* d1 = (RooDataSet*) data_D0BAR_comb->reduce(RooArgSet(*deltam_D0BAR, *ctau_D0BAR),bin_char);
     dataset_d0bar_vect.push_back(d1);
   }
 
   ////SETTING SHAPE PARAMETERS CONSTANT\\\\
   // loading variable's data created from fit
-  RooArgSet* totalpdf_vars = totalpdf->getParameters(*data_mass);
+  RooArgSet* totalpdf_vars = totalpdf.getParameters(*data_mass);
 
   // assinging variable values to constant. Signal/background variables left to vary
 
@@ -450,7 +483,6 @@ cout << "here"  <<endl;
 
 ////FITTING NEW TIME-DEPENDANT SIGNAL VALUES AND PUTTING INTO VECTOR\\\\
   // D0 decay time itteration over subdatasets from vector
- 
   int k;
   int data_d0_size=dataset_d0_vect.size(); 
   RooRealVar *nsignal_vals_D0 ;
@@ -467,12 +499,10 @@ cout << "here"  <<endl;
   const char* file_str_char;
   
 // Creating file for saving time dependent fits for D0  
-
-
-TFile* td_D0_up_16 = new TFile("reweighted_time_dependent_D0_deltam_magup_2016_plots.root","RECREATE");
+TFile* td_D0_up_16 = new TFile("test_reweighted_time_dependent_D0_deltam_magup_2016.root","RECREATE");
 
 for (k=0; k<data_d0_size; k++) {
-    totalpdf->fitTo(*dataset_d0_vect[k]);    
+    totalpdf.fitTo(*dataset_d0_vect[k]);    
     loop_str = to_string(k);
     title_str = "time dependent D0 deltam" + loop_str;
     title_str_char = title_str.c_str();
@@ -480,27 +510,25 @@ for (k=0; k<data_d0_size; k++) {
     file_str_char = file_str.c_str();
     
     // auto canvas_D0 = new TCanvas();
-    
     RooPlot* del_D0_td_frame = deltam_D0->frame(Title(file_str_char));
     dataset_d0_vect[k]->plotOn(del_D0_td_frame);
-    totalpdf->plotOn(del_D0_td_frame);
+    totalpdf.plotOn(del_D0_td_frame);
     del_D0_td_frame->Write(file_str_char);
 
-    totalpdf_signalvars = totalpdf->getParameters(*dataset_d0bar_vect[k]);
+    totalpdf_signalvars = totalpdf.getParameters(*dataset_d0bar_vect[k]);
     nsignal_D0_double = nsignal.getVal();
     nsignal_D0_error_double = nsignal.getError();
     nsignal_D0_vect_double.push_back(nsignal_D0_double);
     nsignal_D0_error_vect_double.push_back(nsignal_D0_error_double);
 
     //   canvas_D0->Close();
-    }
+ }
 td_D0_up_16->Close();
 delete td_D0_up_16;
 
 
  //D0_bar decay time itteration over subdatasets from vector
-  
-int p; 
+  int p; 
   int data_D0bar_size = dataset_d0bar_vect.size();
   RooRealVar *nsignal_vals_D0bar ;
   vector<double> nsignal_D0bar_vect_double;
@@ -515,11 +543,10 @@ int p;
   const char* file_str_char_BAR;
 
 // Creating file for saving time dependent fits for D0BAR
-
-TFile* td_D0BAR_up_16 = new TFile("reweighted_time_dependent_D0BAR_deltam_magup_2016_plots.root","RECREATE");
+TFile* td_D0BAR_up_16 = new TFile("test_time_dependent_D0BAR_deltam_magup_2016.root","RECREATE");
 
   for (p=0; p<data_D0bar_size; p++) {
-    totalpdf->fitTo(*dataset_d0bar_vect[p], SumW2Error(kTRUE));
+    totalpdf.fitTo(*dataset_d0bar_vect[p], SumW2Error(kTRUE));
     loop_str_BAR = to_string(p);
     title_str_BAR = "time dependent D0BAR deltam" + loop_str; 
     title_str_char_BAR = title_str_BAR.c_str();
@@ -529,17 +556,17 @@ TFile* td_D0BAR_up_16 = new TFile("reweighted_time_dependent_D0BAR_deltam_magup_
     // auto canvas_D0BAR = new TCanvas();
     RooPlot* del_D0BAR_td_frame = deltam_D0BAR->frame(Title(file_str_char_BAR));
     dataset_d0bar_vect[p]->plotOn(del_D0BAR_td_frame);
-    totalpdf->plotOn(del_D0BAR_td_frame);
+    totalpdf.plotOn(del_D0BAR_td_frame);
     del_D0BAR_td_frame->Write(file_str_char_BAR);
 
-    totalpdf_signalvars_BAR = totalpdf->getParameters(*dataset_d0bar_vect[p]);
+    totalpdf_signalvars_BAR = totalpdf.getParameters(*dataset_d0bar_vect[p]);
     nsignal_D0bar_double = nsignal.getVal();
     nsignal_D0bar_error_double = nsignal.getError();
     nsignal_D0bar_vect_double.push_back(nsignal_D0bar_double);
     nsignal_D0bar_error_vect_double.push_back(nsignal_D0bar_error_double);
-   
+    
     //  canvas_D0->Close();
-    }
+  }
 td_D0BAR_up_16->Close();
 delete td_D0BAR_up_16;
 
@@ -569,29 +596,15 @@ delete td_D0BAR_up_16;
   D0_sig_hist->Sumw2();
   D0bar_sig_hist->Sumw2();
 
-/*
-float hist_D0_binval;
-float hist_D0bar_binval;
-  for (unsigned int q=0; q<number_bins; q++) {
-    // D0 //
-    hist_D0_binval = histdata_D0[q];
-    D0_sig_hist->SetBinContent(q+1,hist_D0_binval);
-
-    // D0 BAR //
-    hist_D0bar_binval = histdata_D0bar[q];
-    D0bar_sig_hist->SetBinContent(q+1,hist_D0bar_binval);		     
-  }  
-*/
   for (unsigned int q=0; q<number_bins; q++) {
     // D0 //
     nsignal_D0_double = nsignal_D0_vect_double[q];
     D0_sig_hist->SetBinContent(q+1,nsignal_D0_double);
-    
+
     // D0 BAR //
     nsignal_D0bar_double = nsignal_D0bar_vect_double[q];
-    D0bar_sig_hist->SetBinContent(q+1,nsignal_D0bar_double);
-  }
-
+    D0bar_sig_hist->SetBinContent(q+1,nsignal_D0bar_double);		     
+  }  
 
   auto c6 =  new TCanvas();
   D0_sig_hist->Draw();
@@ -644,8 +657,10 @@ float hist_D0bar_binval;
   auto c8 = new TCanvas();
   h3->Draw();
 
- TFile* hist_file = new TFile("wghtapp_ratio_hist_magup_2016.root","RECREATE");
+ TFile* hist_file = new TFile("test_testing_wght_app_hist_magup_2016.root","RECREATE");
   h3->Write();
   hist_file->Close();
   delete hist_file;
+
+
 }
