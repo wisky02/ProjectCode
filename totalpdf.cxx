@@ -168,7 +168,7 @@ void totalpdf(){
   
 ////Data Input\\\\ - Currently not working
 
-  auto data_mass = get_rootfile<RooDataSet*>("/home/ppe/l/ldickson/MSci/2016_datasets/D0_M_1825_1905_magup_Kpipi_2016.root","data");
+  auto data_mass = get_rootfile<RooDataSet*>("/home/ppe/l/ldickson/MSci/2016_datasets/D0_M_1825_1905_magdown_Kpipi_2016.root","data");
   RooRealVar* deltam = get_RRV(data_mass,"deltam");  
   cout << "RRV suc" <<endl;
   cout << "Finished loading data" << endl;
@@ -252,6 +252,6 @@ void totalpdf(){
 
   //Fitting and printing plots
   totalpdf.fitTo(*data_mass);
-  TFile* totalpdf_fit = new TFile("totalpdf_fit.root","RECREATE");
+  TFile* totalpdf_fit = new TFile("totalpdf_fit_down15.root","RECREATE");
   totalpdf.Write();
 }

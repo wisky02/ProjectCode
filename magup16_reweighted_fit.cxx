@@ -274,9 +274,9 @@ void magup16_reweighted_fit(){
  */ 
  //GETTING COMBINED DATA  + CREATING VARIABLE BINS\\\\
 
-//Gettign totalpdf from saved fit
-TFile *file_pdf = TFile::Open("/home/ppe/l/ldickson/MSci/detector_assymmetry_code/code_2_0_1_6/ProjectCode/totalpdf_fit.root");
-RooAddPdf* totalpdf = (RooAddPdf*)file_pdf->Get("totalpdf");
+  //Gettign totalpdf from saved fit
+  TFile *file_pdf = TFile::Open("/home/ppe/l/ldickson/MSci/detector_assymmetry_code/code_2_0_1_6/ProjectCode/totalpdf_fit_up16.root");
+  RooAddPdf* totalpdf = (RooAddPdf*)file_pdf->Get("totalpdf");
 
   // Getting combined data for D0
   auto data_D0_comb = get_rootfile<RooDataSet*>("/home/ppe/l/ldickson/MSci/2016_datasets/D0_M_1825_1905_magup_Kpipi_2016.root","data");
@@ -342,7 +342,8 @@ cout << "bin edges string:" << bin_edges << endl;
   string decaytimes_str;
   vector<string> bin_edges;
   vector<float> bin_edges_float;
-  bin_edges.push_back(to_string(0.));
+  bin_edges_float.push_back(0.);
+  bin_edges.push_back(to_string(bin_edges_float[0]));
   //checks the number of data points within a bound as calculated above and produces ctau lower edge
   for (unsigned int j = 1 ; j < total_entries+1 ; j++){
     if (j % number_per_bin == 0.) { 
@@ -352,7 +353,8 @@ cout << "bin edges string:" << bin_edges << endl;
     }
     else{ continue; }
   }
-
+  sort(bin_edges_float.begin(), bin_edges_float.end());
+  sort(bin_edges.begin(), bin_edges.end());
   ////COMBINING/SORTING VECTORS AND CREATING VARIABLE BINS\\\\
 
 /*
@@ -377,14 +379,12 @@ cout << "bin edges string:" << bin_edges << endl;
    for(unsigned int m = 0; m<bin_edges.size() -1; m++){
     bin_str1 =  "ctau>= ";
     bin_str2 =  bin_edges[m] ;
-    cout << "here" << endl;  
     bin_str3 = " && " ;
     bin_str4 = "ctau <" ;
     bin_str5 =bin_edges[m+1] ;
     total_bin_str = bin_str1 + bin_str2 + bin_str3 + bin_str4 + bin_str5;
     bin_string_vect.push_back(total_bin_str) ;
    }
-cout << "here"  <<endl; 
    //D0bar
   vector<string>bin_string_vect_bar;
   for(unsigned int m = 0; m<bin_edges.size() -1; m++){
@@ -465,7 +465,7 @@ cout << "here"  <<endl;
   string loop_str; 
   string file_str;
   const char* file_str_char;
-  
+  RooRealVar* nsignal_RRV; 
 // Creating file for saving time dependent fits for D0  
 
 
@@ -487,8 +487,9 @@ for (k=0; k<data_d0_size; k++) {
     del_D0_td_frame->Write(file_str_char);
 
     totalpdf_signalvars = totalpdf->getParameters(*dataset_d0bar_vect[k]);
-    nsignal_D0_double = nsignal.getVal();
-    nsignal_D0_error_double = nsignal.getError();
+    nsignal_RRV = (RooRealVar*)&(*totalpdf_signalvars)["nsignal"];
+    nsignal_D0_double = nsignal_RRV->getVal();
+    nsignal_D0_error_double = nsignal_RRV->getError();
     nsignal_D0_vect_double.push_back(nsignal_D0_double);
     nsignal_D0_error_vect_double.push_back(nsignal_D0_error_double);
 
@@ -533,8 +534,9 @@ TFile* td_D0BAR_up_16 = new TFile("reweighted_time_dependent_D0BAR_deltam_magup_
     del_D0BAR_td_frame->Write(file_str_char_BAR);
 
     totalpdf_signalvars_BAR = totalpdf->getParameters(*dataset_d0bar_vect[p]);
-    nsignal_D0bar_double = nsignal.getVal();
-    nsignal_D0bar_error_double = nsignal.getError();
+    nsignal_RRV = (RooRealVar*)&(*totalpdf_signalvars_BAR)["nsignal"];
+    nsignal_D0bar_double = nsignal_RRV->getVal();
+    nsignal_D0bar_error_double = nsignal_RRV->getError();
     nsignal_D0bar_vect_double.push_back(nsignal_D0bar_double);
     nsignal_D0bar_error_vect_double.push_back(nsignal_D0bar_error_double);
    
@@ -542,6 +544,8 @@ TFile* td_D0BAR_up_16 = new TFile("reweighted_time_dependent_D0BAR_deltam_magup_
     }
 td_D0BAR_up_16->Close();
 delete td_D0BAR_up_16;
+cout << "signal value D0bar: " << nsignal_D0bar_vect_double <<endl;
+cout << "signal value D0: " << nsignal_D0_vect_double <<endl;
 
 
   //                 PLOTTING DATA ON HIST              //
