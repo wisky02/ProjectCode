@@ -314,7 +314,7 @@ void magup16_reweighted_fit(){
   decaytimes.insert( decaytimes.end(), decaytimes_D0.begin(), decaytimes_D0.end() );
   decaytimes.insert( decaytimes.end(), decaytimes_D0bar.begin(), decaytimes_D0bar.end() );
   cout << "combined datasets with size: " << decaytimes.size();
-
+  sort(decaytimes.begin(), decaytimes.end());
   ////CREATING VARIABLE BIN EDGES\\\\
   
 //  unsigned  total_entries = decaytimes.size(); 
@@ -332,6 +332,10 @@ void magup16_reweighted_fit(){
   }
 cout << "bin edges string:" << bin_edges << endl;
 */
+
+
+
+
  // cout << "bin edges string:" << bin_edges << endl;
   unsigned  int total_entries = decaytimes.size(); 
   const unsigned  int number_bins = 10;
